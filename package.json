@@ -10,10 +10,13 @@
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "mongoose": "^9.1.6"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.1.6",
+    "mongoose-aggregate-paginate-v2": "^1.1.4"
   }
 }
