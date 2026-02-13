@@ -22,8 +22,6 @@ const registerUser = asyncHandler(async (req, res) => {
   // Get user details from frontend
   const { fullName, username, email, password } = req.body;
 
-  console.log("FullName: ", fullName);
-
   // Validation - Not empty
   if (
     [fullName, username, email, password].some((field) => field?.trim() === "")
@@ -43,10 +41,16 @@ const registerUser = asyncHandler(async (req, res) => {
   // Check for images, check for avatar
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-  console.log("Avatar Loacal Path", avatarLocalPath);
-  console.log("Cover Image Loacal Path", coverImageLocalPath);
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImageLocalPath[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required!");
