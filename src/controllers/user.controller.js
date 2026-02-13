@@ -20,6 +20,11 @@ const registerUser = asyncHandler(async (req, res) => {
    */
 
   // Get user details from frontend
+  if (!req.body) {
+    throw new ApiError(400, "All fields are required!");
+  }
+  console.log(req.body);
+
   const { fullName, username, email, password } = req.body;
 
   // Validation - Not empty
@@ -87,4 +92,58 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfullys!"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  /*
+   * req body -> data
+   * username or email
+   * find the user
+   * password check
+   * access and refresh token
+   * send cookie
+   */
+
+  // **Getting data from req.body**
+  if (!req.body) {
+    throw new ApiError(400, "All fields are required!");
+  }
+  const { usernameOrEmail, password } = req.body;
+  if ([usernameOrEmail, password].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "All fields are required!");
+  }
+
+  //**finding user by its username or email**
+
+  const emailRegx = new RegExp(
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  );
+  // for email validation
+  if (emailRegx.test(usernameOrEmail)) {
+    const user = await User.findOne({ email: usernameOrEmail });
+
+    if (!user) {
+      throw new ApiError(404, "username or password is incorrect!");
+    }
+
+    const isValid = await user.isPasswordCorrect(password);
+    if (!isValid) {
+      throw new ApiError(401, "username or password incorrect!");
+    }
+  }
+
+  //for username validation
+  if (!emailRegx.test(usernameOrEmail)) {
+    const user = await User.findOne({ username: usernameOrEmail });
+
+    if (!user) {
+      throw new ApiError(404, "username or password is incorrect!");
+    }
+
+    const isValid = await user.isPasswordCorrect(password);
+
+    if (!isValid) {
+      throw new ApiError(401, "username or password incorrect!");
+    }
+  }
+});
+
+export { registerUser, loginUser };
