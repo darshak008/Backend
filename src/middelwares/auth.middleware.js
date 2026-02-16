@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, _, next) => {
   try {
     /*
      * Get the auth token
@@ -11,14 +11,16 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
      */
 
     const authToken =
-      req.header?.authorization || req.cookies?.accessToken || "";
+      req.header("Authorization")?.replace("Bearer ", "") ||
+      req.cookies?.accessToken ||
+      "";
 
     if (!authToken) {
       throw new ApiError(401, "Unauthorized access!");
     }
 
-    const JWT_RESPONSE = jwt.verify(authToken, process.env.ACCESS_TOKEN_SECRET);
-    req.user = JWT_RESPONSE;
+    const decodedToken = jwt.verify(authToken, process.env.ACCESS_TOKEN_SECRET);
+    req.user = decodedToken;
     next();
   } catch (err) {
     throw new ApiError(401, "Unauthorized access!");
