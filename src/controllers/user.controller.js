@@ -111,39 +111,92 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required!");
   }
 
-  //**finding user by its username or email**
+  // **finding user by its username or email**
 
-  const emailRegx = new RegExp(
-    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-  );
-  // for email validation
-  if (emailRegx.test(usernameOrEmail)) {
-    const user = await User.findOne({ email: usernameOrEmail });
+  const user = await User.findOne({
+    $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+  });
 
-    if (!user) {
-      throw new ApiError(404, "username or password is incorrect!");
-    }
-
-    const isValid = await user.isPasswordCorrect(password);
-    if (!isValid) {
-      throw new ApiError(401, "username or password incorrect!");
-    }
+  if (!user) {
+    throw new ApiError(401, "User doesn't exists!");
   }
 
-  //for username validation
-  if (!emailRegx.test(usernameOrEmail)) {
-    const user = await User.findOne({ username: usernameOrEmail });
-
-    if (!user) {
-      throw new ApiError(404, "username or password is incorrect!");
-    }
-
-    const isValid = await user.isPasswordCorrect(password);
-
-    if (!isValid) {
-      throw new ApiError(401, "username or password incorrect!");
-    }
+  const isValidPass = user.isPasswordCorrect(password);
+  if (!isValidPass) {
+    throw new ApiError(401, "Invalid user credentials!");
   }
+
+  // **Generating and sending Access and refresh token to the client**
+
+  const JWTAccessToken = user.generateAccessToken();
+  const JWTRefreshToken = user.generateRefreshToken();
+
+  // setting refresh token in DB
+  user.refreshToken = JWTRefreshToken;
+  user.save({ validateBeforeSave: false });
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  //sending res with refresh token and access token
+  res
+    .status(200)
+    .cookie("refreshToken", JWTRefreshToken, cookieOptions)
+    .cookie("accessToken", JWTAccessToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          accessToken: JWTAccessToken,
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.fullName,
+            username: user.username,
+          },
+        },
+        "User logged in successfully!",
+      ),
+    );
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  /*
+   * Get the user data from req.user
+   * remove the refreshToken from the DB
+   * remove the access and refresh token from cookies
+   * send res -> 204 "User logged out successfully!"
+   */
+  // ** Getting the user information from the req.user **
+  const { _id } = req.user;
+
+  // ** Removing refresh token from the DB **
+  const updatedUser = await User.findOneAndUpdate(
+    { _id },
+    {
+      refreshToken: null,
+    },
+    { new: true },
+  );
+  console.log("This is updated user: ", updatedUser);
+
+  // ** remove the access and refresh token from cookies and sending the response **
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  res
+    .status(204)
+    .clearCookie("refreshToken", cookieOptions)
+    .clearCookie("accessToken", cookieOptions)
+    .json(new ApiResponse(204));
+});
+export { registerUser, loginUser, logoutUser };
