@@ -251,4 +251,67 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, err?.message || "Invalid refresh token!");
   }
 });
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+
+const changePassword = asyncHandler(async (req, res) => {
+  /*
+   * Get the oldPassword and newPassword from req.body
+   * Get the user detail from the req.user
+   * Validate password from the DB and validate from and validate from oldPassword
+   * set new password to the DB
+   * send res
+   */
+
+  // ** Gitting the oldPassword and newPassword from req.body **
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword && !newPassword) {
+    throw new ApiError(400, "All fields are required!");
+  }
+
+  const { _id } = req.user;
+  const user = await User.findById(_id);
+  const isPasswordValid = user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid old password!");
+  }
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully!"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  res.status(200).json(new ApiResponse(200, req.user));
+});
+
+const updateAccountDetails = asyncHandler(async () => {
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiError(401, "All fields are required!");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        fullName,
+        email,
+      },
+    },
+    { new: true },
+  ).select("-password");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully!"));
+});
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getCurrentUser,
+  updateAccountDetails,
+};
