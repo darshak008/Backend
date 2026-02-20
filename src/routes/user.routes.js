@@ -4,6 +4,7 @@ import {
   loginUser,
   logoutUser,
   changePassword,
+  getUserProfileDetails,
 } from "../controllers/user.controller.js";
 import { upload } from "../middelwares/multer.middleware.js";
 import { verifyJWT } from "../middelwares/auth.middleware.js";
@@ -20,5 +21,6 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/change-password").post(verifyJWT, changePassword);
+router.route("/get-user-channel").post(verifyJWT, getUserProfileDetails);
 
 export default router;

@@ -14,6 +14,7 @@ const uploadOnCloudinary = async (localFile) => {
     // Upload the file to cloudinary
     const response = await cloudinary.uploader.upload(localFile, {
       resource_type: "auto",
+      folder: "Ytube",
     });
     // console.log("File is uploaded on cloudinary", response.url);
     fs.unlinkSync(localFile);

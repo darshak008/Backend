@@ -312,6 +312,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Given field is required!");
   }
 
+  const oldAvatarUrl = req.user.avatar;
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
   if (!avatar.url) {
@@ -356,6 +357,76 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User avatar changed successfully!"));
 });
 
+const getUserProfileDetails = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username) {
+    throw new ApiError(400, "Username is missing!");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        $subscriberCount: {
+          $size: "subscribers",
+        },
+        $channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        $isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        username: 1,
+        email: 1,
+        $subscriberCount: 1,
+        $channelsSubscribedToCount: 1,
+        $isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel doesn't exists!");
+  }
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User channel  fetched successfully!"),
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -366,4 +437,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserProfileDetails,
 };
