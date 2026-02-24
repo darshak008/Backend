@@ -179,7 +179,9 @@ const logoutUser = asyncHandler(async (req, res) => {
   const updatedUser = await User.findOneAndUpdate(
     { _id },
     {
-      refreshToken: null,
+      $unset: {
+        refreshToken: 1,
+      },
     },
     { new: true },
   );
@@ -358,7 +360,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User avatar changed successfully!"));
 });
 
-const getUserProfileDetails = asyncHandler(async (req, res) => {
+const getChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
   if (!username) {
     throw new ApiError(400, "Username is missing!");
@@ -490,6 +492,6 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserProfileDetails,
+  getChannelProfile,
   getWatchHistory,
 };
