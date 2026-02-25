@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { upload } from "../middelwares/multer.middleware";
-import { verifyJWT } from "../middelwares/auth.middleware";
+import { upload } from "../middelwares/multer.middleware.js";
+import { verifyJWT } from "../middelwares/auth.middleware.js";
 const router = Router();
 
 // upload video

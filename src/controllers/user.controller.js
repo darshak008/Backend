@@ -122,7 +122,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User doesn't exists!");
   }
 
-  const isValidPass = user.isPasswordCorrect(password);
+  const isValidPass = await user.isPasswordCorrect(password);
   if (!isValidPass) {
     throw new ApiError(401, "Invalid user credentials!");
   }
@@ -245,7 +245,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       .json(
         new ApiResponse(
           200,
-          { newAccessToken, refreshToken: newRefreshToken },
+          { accessToken: newAccessToken, refreshToken: newRefreshToken },
           "Access token refreshed!",
         ),
       );
@@ -337,6 +337,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
+  console.log("Cover Image Local Path: ", coverImageLocalPath);
   if (!coverImageLocalPath) {
     throw new ApiError(401, "Given field is required!");
   }
@@ -350,7 +351,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     req.user._id,
     {
       $set: {
-        avatar: coverImage.url,
+        coverImage: coverImage.url,
       },
     },
     { new: true },
@@ -360,6 +361,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User avatar changed successfully!"));
 });
 
+//TODO: testing required!
 const getChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
   if (!username) {
@@ -430,6 +432,7 @@ const getChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+//TODO: testing required!
 const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {

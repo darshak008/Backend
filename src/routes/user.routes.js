@@ -10,6 +10,7 @@ import {
   updateUserAvatar,
   updateUserCoverImage,
   getWatchHistory,
+  refreshAccessToken,
 } from "../controllers/user.controller.js";
 import { upload } from "../middelwares/multer.middleware.js";
 import { verifyJWT } from "../middelwares/auth.middleware.js";
@@ -25,6 +26,7 @@ router.route("/register").post(
 );
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-tokens").post(refreshAccessToken);
 router.route("/change-password").post(verifyJWT, changePassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
