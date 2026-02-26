@@ -337,7 +337,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
-  console.log("Cover Image Local Path: ", coverImageLocalPath);
   if (!coverImageLocalPath) {
     throw new ApiError(401, "Given field is required!");
   }
